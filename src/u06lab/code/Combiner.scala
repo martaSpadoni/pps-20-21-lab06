@@ -12,20 +12,20 @@ trait Functions {
 }
 
 object FunctionsImpl extends Functions {
-
+  import Combiners._
 //  override def sum(a: List[Double]): Double = a.foldRight(0.0)(_+_)
 //
 //  override def concat(a: Seq[String]): String = a.foldRight("")(_+_)
 //
 //  override def max(a: List[Int]): Int = a.foldRight(Int.MinValue)((v,acc) => if(v < acc) acc else v)
 
-  override def sum(a: List[Double]): Double = combiner(a)(SumCombiner())
+  override def sum(a: List[Double]): Double = combine(a)(SumCombiner)
 
-  override def concat(a: Seq[String]): String = combiner(a.toList)(ConcatCombiner())
+  override def concat(a: Seq[String]): String = combine(a.toList)(ConcatCombiner)
 
-  override def max(a: List[Int]): Int = combiner(a)(MaxCombiner())
+  override def max(a: List[Int]): Int = combine(a)(MaxCombiner)
 
-  def combiner[A](a: List[A])(combiner: Combiner[A]): A = a.foldRight(combiner.unit)(combiner.combine)
+  def combine[A](a: List[A])(combiner: Combiner[A]): A = a.foldRight(combiner.unit)(combiner.combine)
 }
 
 
@@ -47,19 +47,26 @@ trait Combiner[A] {
   def combine(a: A, b: A): A
 }
 
-case class SumCombiner() extends Combiner[Double] {
-  override def unit: Double = 0.0
-  override def combine(a: Double, b: Double): Double = a+b
-}
+object Combiners {
 
-case class ConcatCombiner() extends Combiner[String]{
-  override def unit: String = ""
-  override def combine(a: String, b: String): String = a + b
-}
+  object SumCombiner extends Combiner[Double] {
+    override def unit: Double = 0.0
 
-case class MaxCombiner() extends Combiner[Int]{
-  override def unit: Int = Int.MinValue
-  override def combine(a: Int, b: Int): Int = if (a < b) b else a
+    override def combine(a: Double, b: Double): Double = a + b
+  }
+
+  object ConcatCombiner extends Combiner[String] {
+    override def unit: String = ""
+
+    override def combine(a: String, b: String): String = a + b
+  }
+
+  object MaxCombiner extends Combiner[Int] {
+    override def unit: Int = Int.MinValue
+
+    override def combine(a: Int, b: Int): Int = if (a < b) b else a
+  }
+
 }
 
 object TryFunctions2 extends App {
