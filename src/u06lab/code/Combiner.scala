@@ -11,21 +11,48 @@ trait Functions {
   def max(a: List[Int]): Int // gives Int.MinValue if a is empty
 }
 
+trait Combiner[A] {
+  def unit: A
+  def combine(a: A, b: A): A
+}
+
+object Combiners {
+
+  implicit object SumCombiner extends Combiner[Double] {
+    override def unit: Double = 0.0
+
+    override def combine(a: Double, b: Double): Double = a + b
+  }
+
+  implicit object ConcatCombiner extends Combiner[String] {
+    override def unit: String = ""
+
+    override def combine(a: String, b: String): String = a + b
+  }
+
+  implicit object MaxCombiner extends Combiner[Int] {
+    override def unit: Int = Int.MinValue
+
+    override def combine(a: Int, b: Int): Int = if (a < b) b else a
+  }
+}
+
 object FunctionsImpl extends Functions {
   import Combiners._
+
 //  override def sum(a: List[Double]): Double = a.foldRight(0.0)(_+_)
 //
 //  override def concat(a: Seq[String]): String = a.foldRight("")(_+_)
 //
 //  override def max(a: List[Int]): Int = a.foldRight(Int.MinValue)((v,acc) => if(v < acc) acc else v)
 
-  override def sum(a: List[Double]): Double = combine(a)(SumCombiner)
+  override def sum(a: List[Double]): Double = combine(a)
 
-  override def concat(a: Seq[String]): String = combine(a.toList)(ConcatCombiner)
+  override def concat(a: Seq[String]): String = combine(a.toList)
 
-  override def max(a: List[Int]): Int = combine(a)(MaxCombiner)
+  override def max(a: List[Int]): Int = combine(a)
 
-  def combine[A](a: List[A])(combiner: Combiner[A]): A = a.foldRight(combiner.unit)(combiner.combine)
+  def combine[A:Combiner](a: List[A]): A = a.foldRight(implicitly[Combiner[A]].unit)(implicitly[Combiner[A]].combine)
 }
 
 
@@ -42,32 +69,6 @@ object FunctionsImpl extends Functions {
   * When all works, note we completely avoided duplications..
  */
 
-trait Combiner[A] {
-  def unit: A
-  def combine(a: A, b: A): A
-}
-
-object Combiners {
-
-  object SumCombiner extends Combiner[Double] {
-    override def unit: Double = 0.0
-
-    override def combine(a: Double, b: Double): Double = a + b
-  }
-
-  object ConcatCombiner extends Combiner[String] {
-    override def unit: String = ""
-
-    override def combine(a: String, b: String): String = a + b
-  }
-
-  object MaxCombiner extends Combiner[Int] {
-    override def unit: Int = Int.MinValue
-
-    override def combine(a: Int, b: Int): Int = if (a < b) b else a
-  }
-
-}
 
 object TryFunctions2 extends App {
   val f: Functions = FunctionsImpl
