@@ -1,6 +1,6 @@
 package u06lab.code
 
-import u06lab.code.TicTacToe.{Mark, O, X, find}
+import u06lab.code.TicTacToe.{Mark, O, X, computeAnyGame, find, placeAnyMark, printBoards}
 
 object TicTacToe {
 
@@ -27,9 +27,23 @@ object TicTacToe {
 
   def find(board: Board, x: Int, y: Int): Option[Player] = board.find(m => m.x == x && m.y == y).map(_.player)
 
-  def placeAnyMark(board: Board, player: Player): Seq[Board] = ???
+  def placeAnyMark(board: Board, player: Player): Seq[Board] = {
+    for {
+      x <- 0 to 2
+      y <- 0 to 2
+      mark = Mark(x, y, player)
+      if (find(board, x, y).isEmpty)
+    } yield mark :: board
+  }
 
-  def computeAnyGame(player: Player, moves: Int): Stream[Game] = ???
+
+  def computeAnyGame(player: Player, moves: Int): Stream[Game] = moves match {
+    case 0 => Stream(List(Nil))
+    case _ => for{
+      g <- computeAnyGame(player.other,moves-1)
+      b <- placeAnyMark(g.head, player)
+    } yield b :: g
+  }
 
   def printBoards(game: Seq[Board]): Unit =
     for (y <- 0 to 2; board <- game.reverse; x <- 0 to 2) {
@@ -46,18 +60,20 @@ object TicTacToeTest extends App {
   println(find(List(Mark(0, 0, X), Mark(0, 1, O), Mark(0, 2, X)), 0, 1)) // Some(O)
   println(find(List(Mark(0, 0, X), Mark(0, 1, O), Mark(0, 2, X)), 1, 1)) // None
 
-  //  // Exercise 2: implement placeAnyMark such that..
-  //  printBoards(placeAnyMark(List(),X))
-  //  //... ... ..X ... ... .X. ... ... X..
-  //  //... ..X ... ... .X. ... ... X.. ...
-  //  //..X ... ... .X. ... ... X.. ... ...
-  //  printBoards(placeAnyMark(List(Mark(0,0,O)),X))
-  //  //O.. O.. O.X O.. O.. OX. O.. O..
-  //  //... ..X ... ... .X. ... ... X..
-  //  //..X ... ... .X. ... ... X.. ...
-  //
-  //  // Exercise 3 (ADVANCED!): implement computeAnyGame such that..
-  //  computeAnyGame(O, 4) foreach {g => printBoards(g); println()}
+  // Exercise 2: implement placeAnyMark such that..
+  printBoards(placeAnyMark(List(),X))
+  //... ... ..X ... ... .X. ... ... X..
+  //... ..X ... ... .X. ... ... X.. ...
+  //..X ... ... .X. ... ... X.. ... ...
+  printBoards(placeAnyMark(List(Mark(0,0,O)),X))
+  //O.. O.. O.X O.. O.. OX. O.. O..
+  //... ..X ... ... .X. ... ... X..
+  //..X ... ... .X. ... ... X.. ...
+
+  println()
+
+  // Exercise 3 (ADVANCED!): implement computeAnyGame such that..
+  computeAnyGame(O, 4) foreach {g => printBoards(g); println()}
   //... X.. X.. X.. XO.
   //... ... O.. O.. O..
   //... ... ... X.. X..
