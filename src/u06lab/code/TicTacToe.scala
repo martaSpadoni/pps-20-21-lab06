@@ -2,7 +2,7 @@ package u06lab.code
 
 import u06lab.code.TicTacToe.{Board, Mark, O, X, computeAnyGame, find, placeAnyMark, printBoards}
 
-import java.util.function.Predicate
+import u06lab.code.TicTacToe.HasWon._
 
 object TicTacToe {
 
@@ -58,7 +58,7 @@ object TicTacToe {
     }
 
     def someoneHasWon(board: Board):Boolean = {
-      var hasWon:Boolean = false;
+      var hasWon:Boolean = false
       for(x <- 0 to 2 if !hasWon){
         hasWon = someoneHasWonIn(board, row(x)) ||
               someoneHasWonIn(board, col(x)) ||
@@ -69,15 +69,14 @@ object TicTacToe {
     }
   }
 
-
-
   def computeAnyGame(player: Player, moves: Int): Stream[Game] = moves match {
     case 0 => Stream(List(Nil))
-    case _ => for{
+    case _ => (for{
       g <- computeAnyGame(player.other,moves-1)
       b <- placeAnyMark(g.head, player)
-    } yield if(HasWon.someoneHasWon(g.head)) g else b :: g
+    } yield if(someoneHasWon(g.head)) g else  b :: g).distinct
   }
+
 
   def printBoards(game: Seq[Board]): Unit =
     for (y <- 0 to 2; board <- game.reverse; x <- 0 to 2) {
