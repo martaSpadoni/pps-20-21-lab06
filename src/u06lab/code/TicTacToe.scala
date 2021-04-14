@@ -38,37 +38,6 @@ object TicTacToe {
     } yield mark :: board
   }
 
-  object HasWon{
-
-    def row(x:Int):PartialFunction[Mark, Int] = fun((i,_) => i == x)
-
-    def col(y:Int):PartialFunction[Mark, Int] = fun((_,j) => j == y)
-
-    def diag1():PartialFunction[Mark, Int] = fun((i,j) => i-j == 0)
-
-    def diag2():PartialFunction[Mark, Int] = fun((i,j) => i+j == 2)
-
-    def fun(pred: (Int, Int) => Boolean):PartialFunction[Mark, Int] = {
-      case Mark(i, j, X) if pred(i,j) => 1
-      case Mark(i, j, O) if pred(i,j) => -1
-    }
-
-    def someoneHasWonIn(board: Board, in:PartialFunction[Mark, Int]):Boolean = {
-      board.collect(in).sum.abs == 3
-    }
-
-    def someoneHasWon(board: Board):Boolean = {
-      var hasWon:Boolean = false
-      for(x <- 0 to 2 if !hasWon){
-        hasWon = someoneHasWonIn(board, row(x)) ||
-              someoneHasWonIn(board, col(x)) ||
-              someoneHasWonIn(board, diag1())||
-              someoneHasWonIn(board, diag2())
-      }
-      hasWon
-    }
-  }
-
   def computeAnyGame(player: Player, moves: Int): Stream[Game] = moves match {
     case 0 => Stream(List(Nil))
     case _ => (for{
@@ -77,6 +46,21 @@ object TicTacToe {
     } yield if(someoneHasWon(g.head)) g else  b :: g).distinct
   }
 
+  object HasWon{
+
+    def someoneHasWonIn(board: Board, in:(Int, Int) => Boolean):Boolean = board.collect{
+        case Mark(i, j, X) if in(i,j) => 1
+        case Mark(i, j, O) if in(i,j) => -1
+      }.sum.abs == 3
+
+    def someoneHasWonInRow(board: Board, x:Int): Boolean = someoneHasWonIn(board, (i,_) => i == x)
+    def someoneHasWonInCol(board: Board, y:Int): Boolean = someoneHasWonIn(board, (_,j) => j == y)
+    def someoneHasWonInDiagonal(board: Board):Boolean = someoneHasWonIn(board, (i,j) => i==j) ||
+                                                        someoneHasWonIn(board, (i,j) => i+j == 2)
+    def someoneHasWon(board: Board):Boolean = (for {
+      i <- 0 to 2
+    } yield someoneHasWonInRow(board, i) || someoneHasWonInCol(board, i)).contains(true) || someoneHasWonInDiagonal(board)
+  }
 
   def printBoards(game: Seq[Board]): Unit =
     for (y <- 0 to 2; board <- game.reverse; x <- 0 to 2) {
