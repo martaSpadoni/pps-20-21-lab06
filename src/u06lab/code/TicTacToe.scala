@@ -1,6 +1,8 @@
 package u06lab.code
 
-import u06lab.code.TicTacToe.{Mark, O, X, computeAnyGame, find, placeAnyMark, printBoards}
+import u06lab.code.TicTacToe.{Board, Mark, O, X, computeAnyGame, find, placeAnyMark, printBoards}
+
+import java.util.function.Predicate
 
 object TicTacToe {
 
@@ -32,9 +34,41 @@ object TicTacToe {
       x <- 0 to 2
       y <- 0 to 2
       mark = Mark(x, y, player)
-      if (find(board, x, y).isEmpty)
+      if find(board, x, y).isEmpty
     } yield mark :: board
   }
+
+  object HasWon{
+
+    def row(x:Int):PartialFunction[Mark, Int] = fun((i,_) => i == x)
+
+    def col(y:Int):PartialFunction[Mark, Int] = fun((_,j) => j == y)
+
+    def diag1():PartialFunction[Mark, Int] = fun((i,j) => i-j == 0)
+
+    def diag2():PartialFunction[Mark, Int] = fun((i,j) => i+j == 2)
+
+    def fun(pred: (Int, Int) => Boolean):PartialFunction[Mark, Int] = {
+      case Mark(i, j, X) if pred(i,j) => 1
+      case Mark(i, j, O) if pred(i,j) => -1
+    }
+
+    def someoneHasWonIn(board: Board, in:PartialFunction[Mark, Int]):Boolean = {
+      board.collect(in).sum.abs == 3
+    }
+
+    def someoneHasWon(board: Board):Boolean = {
+      var hasWon:Boolean = false;
+      for(x <- 0 to 2 if !hasWon){
+        hasWon = someoneHasWonIn(board, row(x)) ||
+              someoneHasWonIn(board, col(x)) ||
+              someoneHasWonIn(board, diag1())||
+              someoneHasWonIn(board, diag2())
+      }
+      hasWon
+    }
+  }
+
 
 
   def computeAnyGame(player: Player, moves: Int): Stream[Game] = moves match {
@@ -42,7 +76,7 @@ object TicTacToe {
     case _ => for{
       g <- computeAnyGame(player.other,moves-1)
       b <- placeAnyMark(g.head, player)
-    } yield b :: g
+    } yield if(HasWon.someoneHasWon(g.head)) g else b :: g
   }
 
   def printBoards(game: Seq[Board]): Unit =
@@ -71,9 +105,12 @@ object TicTacToeTest extends App {
   //..X ... ... .X. ... ... X.. ...
 
   println()
-
+//  val b:Board = List(Mark(2, 0,O), Mark(1, 1,O), Mark(0, 2,O))
+//  printBoards(Seq(b))
+//  println(someoneHasWon(b))
   // Exercise 3 (ADVANCED!): implement computeAnyGame such that..
-  computeAnyGame(O, 4) foreach {g => printBoards(g); println()}
+  //println(computeAnyGame(O, 6).size)
+  computeAnyGame(O, 6) foreach {g => printBoards(g); println()}
   //... X.. X.. X.. XO.
   //... ... O.. O.. O..
   //... ... ... X.. X..

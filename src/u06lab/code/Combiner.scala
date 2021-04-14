@@ -48,27 +48,13 @@ object FunctionsImpl extends Functions {
 
   override def sum(a: List[Double]): Double = combine(a)
 
-  override def concat(a: Seq[String]): String = combine(a.toList)
+  override def concat(a: Seq[String]): String = combine(a)
 
   override def max(a: List[Int]): Int = combine(a)
 
-  def combine[A:Combiner](a: List[A]): A = a.foldRight(implicitly[Combiner[A]].unit)(implicitly[Combiner[A]].combine)
+  def combine[A:Combiner](a: Seq[A]): A =
+    a.foldRight(implicitly[Combiner[A]].unit)(implicitly[Combiner[A]].combine)
 }
-
-
-/*
-  * 2) To apply DRY principle at the best,
-  * note the three methods in Functions do something similar.
-  * Use the following approach:
-  * - find three implementations of Combiner that tell (for sum,concat and max) how
-  *   to combine two elements, and what to return when the input list is empty
-  * - implement in FunctionsImpl a single method combiner that, other than
-  *   the collection of A, takes a Combiner as input
-  * - implement the three methods by simply calling combiner
-  *
-  * When all works, note we completely avoided duplications..
- */
-
 
 object TryFunctions2 extends App {
   val f: Functions = FunctionsImpl
